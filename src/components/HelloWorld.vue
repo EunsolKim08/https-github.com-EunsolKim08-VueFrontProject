@@ -70,7 +70,7 @@ export default {
   },
   methods: {
     load() {
-      axios.get('/vueApi/selectNoticeList/').then(res => { 
+      axios.get('/noticeOne/selectNoticeList/').then(res => { 
         this.boardList = res.data;
       });
     },
@@ -88,9 +88,9 @@ export default {
           "noticeUpendexpsrAt": "N"
       };
       if(this.noticeNo == undefined || this.noticeNo == ''){
-        url = "/vueApi/insertNoticeForm/";
+        url = "/noticeOne/insertNoticeForm/";
       }else{
-        url = "/vueApi/updatetNoticeForm/";
+        url = "/noticeOne/updatetNoticeForm/";
       }
 
       axios.post(url, params).then(res => { 
@@ -98,6 +98,7 @@ export default {
           this.noticeNo= '';
           alert("저장이 완료되었습니다.");
           this.modalOpen = false;
+          this.load();
         }else{
           alert("저장을 실패했습니다. 잠시후 다시시도해 주세요.");
         } 
@@ -110,10 +111,11 @@ export default {
         "deleteArr": this.deleteArr,
       };
       console.log(params.deleteArr);
-      axios.post("/vueApi/deleteNoticeForm/", params).then(res => { 
+      axios.post("/noticeOne/deleteNoticeForm/", params).then(res => { 
         if(res.status == 200){
            alert("삭제가 완료되었습니다..");
            this.modalOpen = false;
+           this.load();
         }else{
           console.log(res);
            alert("삭제 실패되었습니다..");
@@ -130,7 +132,7 @@ export default {
         "noticeNo": idx,
       };
 
-     axios.post("/vueApi/selectNoticeDetail/", params).then(res => { 
+     axios.post("/noticeOne/selectNoticeDetail/", params).then(res => { 
         if(res.status == 200){
          this.noticeSj = res.data.detail.noticeSj;
          this.noticeCn = res.data.detail.noticeCn;
