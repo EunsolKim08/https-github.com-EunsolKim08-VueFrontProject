@@ -53,7 +53,6 @@
 <script>
 import axios from 'axios';
 
-
 export default {
   data() {
     return {
@@ -181,19 +180,18 @@ td, thead, th{
   width : 60px;
 }
 .black-bg {
-  display: flex;
-  align-items: center;
+  background-color: rgba(0, 0, 0, 0.432);
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.432);
   position: fixed;
-  padding: 20px;
 }
 .white-bg {
   width: 50%;
   background-color: white;
   padding: 20px;
   border-radius: 8px;
+  display:inline-block;
+  margin:10%;
 }
 
 .modal-exit-btn {
