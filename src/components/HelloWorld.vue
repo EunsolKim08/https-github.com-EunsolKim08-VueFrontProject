@@ -1,10 +1,8 @@
 <template>
-  <div class="black-bg">
-      <div id="board">
-        <h1>공지사항 게시판</h1>
-        <button id="writeButton" class="btnClass" v-on:click="getPopUpModal"> 글쓰기</button>
-        <button type="button" class="btnClass" v-on:click="fnDelete">삭제</button>
-        <table id="noticeBoard">
+    <div v-bind:class="{ 'black-bg': modalOpen === true }">
+      <h1>공지사항 게시판</h1>
+      <button id="writeButton" class="btnClass" v-on:click="getPopUpModal"> 글쓰기</button>
+       <table id="noticeBoard">
           <thead>
           <tr>
             <th></th>
@@ -18,32 +16,38 @@
           <tr v-for="(row, noticeNo) in boardList" :key="noticeNo">
             <td><input type="checkbox" class="chkBoxClass"></td>
             <td>{{ row.noticeNo }}</td>
-            <td> <a>{{ row.noticeSj }}</a></td>
+            <td class="noticeDetail" v-on:click="fnDetail(row.noticeNo)"> {{ row.noticeSj }}</td>
             <td>{{ row.registerId }}</td>
             <td>{{ row.registDt}}</td>
           </tr>
           </tbody>
         </table>
-      </div>
-      <div id="modalPopUp" v-if="modalOpen === true">
-        <form>
-          <div class="btnCloseModal">
-             <button id="btnCloseModal" v-on:click="closePopUpModal">X</button>
-          </div>
-          <div class="board-contents">
-            <input id="noticeSj" type="text" v-model="noticeSj" placeholder="제목을 입력해주세요.">
-          </div>
-          <div class="board-contents">
-            <textarea id="noticeCn" cols="30" rows="10" v-model="noticeCn"  style="resize: none;">
-            </textarea>
-          </div>
-          <div class="common-buttons">
-            <button type="button" class="btnClass" v-on:click="fnSave">저장</button>&nbsp;
-            <button type="button" class="btnClass" v-on:click="fnDelete">삭제</button>
-          </div>
-        </form>     
     </div>
-  </div>
+    <div class="black-bg" v-if="modalOpen === true">
+      <div class="white-bg">
+          <form id="writeForm">
+            <div class="btnCloseModal">
+              <button id="btnCloseModal" v-on:click="closePopUpModal">X</button>
+            </div>
+            <div id="noticeNo" >
+              번호 : {{noticeNo}}
+            </div>
+            <div class="board-contents">
+              <input id="noticeSj" type="text" v-model="noticeSj" placeholder="제목을 입력해주세요.">
+            </div>
+            <div class="board-contents">
+              <textarea id="noticeCn" cols="30" rows="10" v-model="noticeCn"  style="resize: none;">
+              </textarea>
+            </div>
+            <div class="common-buttons">
+              <button type="button" class="btnClass" v-on:click="fnSave">저장</button>&nbsp;
+              <button type="button" class="btnClass" v-on:click="fnDelete(noticeNo)">삭제</button>
+            </div>
+          </form>     
+      </div>
+    </div>
+
+
 </template>
 
 <script>
@@ -55,6 +59,10 @@ export default {
     return {
       boardList: [],
       modalOpen: false,
+      noticeSj:'',
+      noticeCn:'',
+      noticeNo:'',
+      deleteArr:[]
     }
   },
   mounted() {
@@ -63,12 +71,10 @@ export default {
   methods: {
     load() {
       axios.get('/vueApi/selectNoticeList/').then(res => { 
-        console.log(res.data);
         this.boardList = res.data;
       });
     },
     getPopUpModal(){
-      console.log("글쓰기 버튼 클릭");
       this.modalOpen = true;
     },
     fnSave(){
@@ -81,7 +87,7 @@ export default {
           "noticeCn": this.noticeCn,
           "noticeUpendexpsrAt": "N"
       };
-      if(this.noticeNo == undefined){
+      if(this.noticeNo == undefined || this.noticeNo == ''){
         url = "/vueApi/insertNoticeForm/";
       }else{
         url = "/vueApi/updatetNoticeForm/";
@@ -89,18 +95,49 @@ export default {
 
       axios.post(url, params).then(res => { 
         if(res.status == 200){
+          this.noticeNo= '';
           alert("저장이 완료되었습니다.");
           this.modalOpen = false;
         }else{
           alert("저장을 실패했습니다. 잠시후 다시시도해 주세요.");
-        }    
-      });
+        } 
+      });  
     },
-    fnDelete(){
-      console.log("삭제하기 버튼 클릭");
+    fnDelete(idx){
+      /**삭제 배열에 추가*/
+      this.deleteArr.push(idx);
+      let params =  {
+        "deleteArr": this.deleteArr,
+      };
+      console.log(params.deleteArr);
+      axios.post("/vueApi/deleteNoticeForm/", params).then(res => { 
+        if(res.status == 200){
+           alert("삭제가 완료되었습니다..");
+           this.modalOpen = false;
+        }else{
+          console.log(res);
+           alert("삭제 실패되었습니다..");
+        }  
+      });
     },
     closePopUpModal(){
       this.modalOpen = false;
+    },
+    fnDetail(idx){
+      this.modalOpen = true;
+      
+      let params =  {
+        "noticeNo": idx,
+      };
+
+     axios.post("/vueApi/selectNoticeDetail/", params).then(res => { 
+        if(res.status == 200){
+         this.noticeSj = res.data.detail.noticeSj;
+         this.noticeCn = res.data.detail.noticeCn;
+         this.noticeNo = res.data.detail.noticeNo;
+        }  
+      });
+   
     },
     components: {
     
@@ -135,21 +172,43 @@ td, thead, th{
       border: 1px solid #333333;
 }
 #writeButton{
-
   margin : 0px 10px 20px 75%;
 }
 .btnClass{
   height: 30px;
   width : 60px;
 }
-.black-bg{
-  //background:rgba(0,0,0,0.8);
+.black-bg {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.432);
+  position: fixed;
+  padding: 20px;
+}
+.white-bg {
+  width: 50%;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.modal-exit-btn {
+  margin-top: 30px;
+}
+
+.modal-exit-btn:hover {
+  cursor: pointer;
 }
 .chkBoxClass{
   background:rgba(0,0,0,0.8);
 }
 #modalPopUp{
  
+}
+#noticeNo{
+  font-size:18px;
 }
 #noticeSj{
   width: 400px;
@@ -164,5 +223,9 @@ td, thead, th{
 }
 #btnCloseModal{
   margin: 0px 0px 10px 350px;
+}
+.noticeDetail{
+  text-decoration : underline;
+  cursor:pointer;
 }
 </style>
